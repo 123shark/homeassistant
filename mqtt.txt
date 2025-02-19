@@ -1,0 +1,10 @@
+https://www.youtube.com/watch?v=0QQ3y8fgRVA 
+Neues Repo in Add-on hinzufügen : https://github.com/GollumDom/addon-repository
+Add-on hinzufügen MQTT Explorer
+User Einrichten: mqttuser Passwort vregeben
+Add-on MQTT Brocker installieren
+MQTT Brocker konfigurieren : 192.168.178.13:1883 un dmit dem mqttuser verknüpfen
+
+
+
+ESPMQTTClient Bibliothek auf dem ESP installieren
