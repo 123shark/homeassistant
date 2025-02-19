@@ -5,6 +5,16 @@ User Einrichten: mqttuser Passwort vregeben
 Add-on MQTT Brocker installieren
 MQTT Brocker konfigurieren : 192.168.178.13:1883 un dmit dem mqttuser verknüpfen
 
-
+Nch zu testen
+configuration.yaml folgende Zeilen hinzufügen
+sensor:
+  - platform: mqtt
+    name: "Box Temperatur oben"
+    state_topic: "homeassistant/box/temperatureoben"
+    unit_of_measurement: "°C"
+  - platform: mqtt
+    name: "Box Luftfeuchtigkeit oben"
+    state_topic: "homeassistant/box/humidityoben"
+    unit_of_measurement: "%"
 
 ESPMQTTClient Bibliothek auf dem ESP installieren
