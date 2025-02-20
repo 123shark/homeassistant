@@ -5,16 +5,103 @@ User Einrichten: mqttuser Passwort vregeben
 Add-on MQTT Brocker installieren
 MQTT Brocker konfigurieren : 192.168.178.13:1883 un dmit dem mqttuser verknüpfen
 
-Nch zu testen
+Noch zu testen
 configuration.yaml folgende Zeilen hinzufügen
-sensor:
-  - platform: mqtt
-    name: "Box Temperatur oben"
-    state_topic: "homeassistant/box/temperatureoben"
-    unit_of_measurement: "°C"
-  - platform: mqtt
-    name: "Box Luftfeuchtigkeit oben"
-    state_topic: "homeassistant/box/humidityoben"
-    unit_of_measurement: "%"
+mqtt:
+  sensor:
+    - name: "ESP32 Temperatur"
+      state_topic: "home/esp32/temperature"
+      unit_of_measurement: "°C"
+  switch:
+    - name: "ESP32 Relais"
+      state_topic: "home/esp32/relay"
+      command_topic: "home/esp32/relay/set"
+      payload_on: "1"
+      payload_off: "0"
+      retain: true
 
-ESPMQTTClient Bibliothek auf dem ESP installieren
+##########################################
+ESP32 Seite
+
+PubSubClient Bibliothek auf dem ESP installieren
+#include <WiFi.h>
+#include <PubSubClient.h>
+
+const char* ssid = "DEIN_WLAN_SSID";
+const char* password = "DEIN_WLAN_PASSWORT";
+const char* mqtt_server = "DEINE_MQTT_BROKER_IP";
+
+// MQTT-Themen
+const char* temp_topic = "home/esp32/temperature";
+const char* relay_topic = "home/esp32/relay";
+const char* command_topic = "home/esp32/relay/set";
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+const int relayPin = 2;  // GPIO für das Relais
+float temperature = 0.0; // Dummy-Temperaturwert
+
+void setup_wifi() {
+  delay(10);
+  Serial.println("Verbinde mit WLAN...");
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("Verbunden mit WLAN!");
+}
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Nachricht empfangen: ");
+  Serial.println(topic);
+
+  if (strcmp(topic, command_topic) == 0) {
+    if ((char)payload[0] == '1') {
+      digitalWrite(relayPin, HIGH);
+      client.publish(relay_topic, "1");  // Relaisstatus aktualisieren
+    } else {
+      digitalWrite(relayPin, LOW);
+      client.publish(relay_topic, "0");
+    }
+  }
+}
+
+void reconnect() {
+  while (!client.connected()) {
+    Serial.print("Verbindung zu MQTT...");
+    if (client.connect("ESP32Client")) {
+      Serial.println("Verbunden!");
+      client.subscribe(command_topic);  // Abonniert Steuerungsnachricht
+    } else {
+      Serial.print("Fehlgeschlagen, rc=");
+      Serial.print(client.state());
+      Serial.println(" Warte 5 Sekunden...");
+      delay(5000);
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(relayPin, OUTPUT);
+  setup_wifi();
+  client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);
+}
+
+void loop() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+
+  // Simulierte Temperatur senden
+  temperature = random(20, 30);  // Dummy-Wert für Test
+  char tempString[8];
+  dtostrf(temperature, 1, 2, tempString);
+  client.publish(temp_topic, tempString);
+
+  delay(5000);
+}
